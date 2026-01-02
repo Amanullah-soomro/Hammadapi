@@ -7,21 +7,21 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// ===========================
 // Neon Database Connection
+// ===========================
 const pool = new Pool({
-  connectionString: "postgresql://neondb_owner:npg_JdyGgIfZQ43h@ep-autumn-boat-ah776cy3-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_JdyGgIfZQ43h@ep-autumn-boat-ah776cy3-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   ssl: { rejectUnauthorized: false }
 });
 
-/*
-===========================
- EMPLOYEES API
-===========================
-*/
+// ===========================
+// EMPLOYEES API
+// ===========================
 
 // ➕ Add Employee
 app.post('/api/employees', async (req, res) => {
-  const { name, job, department_id } = req.body;
+  const { name, job, department } = req.body;
 
   try {
     const result = await pool.query(
@@ -33,33 +33,28 @@ app.post('/api/employees', async (req, res) => {
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error adding employee:", error.message);
+    res.status(500).json({ message: "Failed to add employee" });
   }
 });
 
-// 📥 Get Employees (with Department Name)
+// 📥 Get All Employees
 app.get('/api/employees', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT e.id, e.name, e.job, d.name AS department
-       FROM employees e
-       LEFT JOIN departments d
-       ON e.department_id = d.id`
+      `SELECT id, name, job, department FROM employees ORDER BY id ASC`
     );
 
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error fetching employees:", error.message);
+    res.status(500).json({ message: "Failed to fetch employees" });
   }
 });
 
-/*
-===========================
- DEPARTMENTS API
-===========================
-*/
+// ===========================
+// DEPARTMENTS API (Optional)
+// ===========================
 
 // ➕ Add Department
 app.post('/api/departments', async (req, res) => {
@@ -75,30 +70,35 @@ app.post('/api/departments', async (req, res) => {
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error adding department:", error.message);
+    res.status(500).json({ message: "Failed to add department" });
   }
 });
 
-// 📥 Get Departments
+// 📥 Get All Departments
 app.get('/api/departments', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM departments ORDER BY id ASC`
+      `SELECT id, name FROM departments ORDER BY id ASC`
     );
 
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error fetching departments:", error.message);
+    res.status(500).json({ message: "Failed to fetch departments" });
   }
 });
 
+// ===========================
 // Test API
+// ===========================
 app.get('/', (req, res) => {
   res.send("Hammad API is Running Live!");
 });
 
+// ===========================
+// Start Server
+// ===========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`Server running on port ${PORT}`)
