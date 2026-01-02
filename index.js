@@ -25,10 +25,10 @@ app.post('/api/employees', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `INSERT INTO employees (name, job, department_id)
+      `INSERT INTO employees (name, job, department)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, job, department_id]
+      [name, job, department]
     );
 
     res.status(201).json(result.rows[0]);
